@@ -1,0 +1,326 @@
+:root {
+	--gradient-color: rgba(255,255,255,.8);
+}
+* {
+	box-sizing: border-box;
+	margin: 0;
+	font-size: 18px;
+	font-family: 'Arial', sans-serif;
+}
+body {
+	background-color: white;
+	font-weight: 100;
+	width: 100vw;
+	height: 100vh;
+	overflow: hidden;
+}
+#container {
+	width: 100vw;
+	height: 100vh;
+	overflow: hidden;
+	cursor: crosshair;
+	background-color: black;
+	transform: translate3d(0,0,0);
+}
+
+/* Header */
+header {
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	overflow: hidden;
+}
+.header-vignette {
+	z-index: 3;
+	pointer-events: none;
+	position: absolute;
+	width: 100vw;
+	height: 100vh;
+	background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 20%), linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 20%), linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 20%), linear-gradient(270deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 20%);
+}
+.header-arrows {
+	font-family: "caffeine", sans-serif;
+	pointer-events: none;
+	z-index: 2;
+}
+.header-arrows span {
+	position: absolute;
+}
+.title {
+	position: absolute;
+	font-family: "caffeine", sans-serif;
+	font-size: 3rem;
+	margin-bottom: 2rem;
+}
+.home-container {
+	padding: 80px 40px;
+}
+.home-container p {
+	width: 100%;
+	max-width: 800px;
+	margin: 1.5em auto;
+	line-height: 1.5em;
+	font-size: 1.8rem;
+	letter-spacing: .05em;
+}
+
+/* Overlays */
+.grain {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 120vw;
+	height: 120vh;
+	animation-name: grain;
+	animation-duration: .5s;
+	animation-iteration-count: infinite;
+	animation-timing-function: steps(4);
+	mix-blend-mode: luminosity;
+	opacity: 0.15;
+	pointer-events: none;
+	z-index: 999;
+}
+@keyframes grain {
+	0% {
+		left: -20vw;
+		top: -20vh;
+	}
+	33% {
+		left: 0vw;
+		top: -20vh;
+	}
+	66% {
+		left: 0vw;
+		top: 0vh;
+	}
+	100% {
+		left: -20vw;
+		top: 0vh;
+	}
+}
+.vignette {
+	z-index: 99;
+	pointer-events: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 20%), linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 20%), linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 20%), linear-gradient(270deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 20%);
+}
+
+
+
+
+#intro {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 99999999;
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	font-size: 12px;
+	padding: 20px;
+	background-color: black;
+	cursor: pointer;
+	gap: 20px;
+}
+#intro h1 {
+	background-color: white;
+	color: black;
+	font-weight: normal;
+	border: 1px solid white;
+	padding: 5px 20px;
+}
+#intro h2 {
+	background-color: black;
+	color: white;
+	font-weight: normal;
+	border: 1px solid white;
+	padding: 5px;
+	padding: 5px 20px;
+}
+#intro:hover h1 {
+	background-color: black;
+	color: white;
+}
+#intro:hover h2 {
+	background-color: white;
+	color: black;
+}
+
+/* UI Elements */
+#ui {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+	position: absolute;
+	left: 50%;
+	bottom: 80px;
+	max-width: 700px;
+	width: 100%;
+	height: 20px;
+	z-index: 9999999;
+	transform: translateX(-50%);
+	pointer-events: none;
+	border: 1px solid black;
+}
+#ui div {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	overflow: hidden;
+	font-size: 12px;
+}
+.ui0 {
+	background-color: white;
+	color: black;
+}
+.ui1 {
+	background-color: black;
+	color: white;
+}
+.background-gradient {
+	width: 100vw;
+	height: 100vh;
+	position: fixed;
+	z-index: 1000;
+	transition-timing-function: linear;
+	pointer-events: none;
+}
+#background-n {
+	opacity: 0;
+	width: 100%;
+	height: 10%;
+	left: 0;
+	top: 0;
+	background: linear-gradient(180deg, var(--gradient-color) 0%, rgba(0,0,0,0) 100%);
+}
+#background-e {
+	opacity: 0;
+	width: 10%;
+	height: 100%;
+	right: 0;
+	top: 0;
+	background: linear-gradient(270deg, var(--gradient-color) 0%, rgba(0,0,0,0) 100%);
+}
+#background-s {
+	opacity: 0;
+	width: 100%;
+	height: 10%;
+	left: 0;
+	bottom: 0;
+	background: linear-gradient(0deg, var(--gradient-color) 0%, rgba(0,0,0,0) 100%);
+}
+#background-w {
+	opacity: 0;
+	width: 10%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	background: linear-gradient(90deg, var(--gradient-color) 0%, rgba(0,0,0,0) 100%);
+}
+#vignette {
+	width: 100vw;
+	height: 100vh;
+	position: absolute;
+	top: 0;
+	left: 0;
+	background: linear-gradient(0deg, black 0%, rgba(0,0,0,0) 10%), linear-gradient(90deg, black 0%, rgba(0,0,0,0) 10%), linear-gradient(180deg, black 0%, rgba(0,0,0,0) 10%), linear-gradient(270deg, black 0%, rgba(0,0,0,0) 10%);
+	z-index: 999;
+	opacity: 8;
+	pointer-events: none;
+}
+
+/* Trackers */
+#trackers {
+	width: 100vw;
+	height: 100vh;
+	position: fixed;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+	z-index: 9999;
+}
+.tracker {
+	position: absolute;
+	padding: 5px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.tracker-dot {
+	width: 100%;
+	height: 100%;
+	border: 2px solid white;
+}
+
+/* Paths */
+#paths {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 100;
+	pointer-events: none;
+}
+.path {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	fill: none;
+	stroke: white;
+	stroke-width: 2px;
+	stroke-dasharray: 1;
+	stroke-dashoffset: 1;
+	animation: path 10s linear forwards;
+	filter: url(#displacementFilter);
+	display: none;
+}
+@keyframes path {
+	from {
+		stroke-dashoffset: 1;
+	}
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+
+/* Main content */
+#content {
+	width: 400vw;
+	height: 400vh;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	background-image: url("assets/ui/grid.svg");
+	background-position: center;
+	background-size: 100px;
+	transform: translate(-50%, -50%) scale(1);
+	transform-origin: center;
+	overflow: hidden;
+}
+.floater {
+	position: absolute;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	transform-origin: center;
+	-webkit-user-select: none; /* Safari */
+	-ms-user-select: none; /* IE 10 and IE 11 */
+	user-select: none; /* Standard syntax */
+	/* mix-blend-mode: screen; */
+}
+.floater:hover {
+	outline: 2px solid white;
+}
