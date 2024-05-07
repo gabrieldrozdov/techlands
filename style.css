@@ -11,13 +11,13 @@ body {
 	background-color: white;
 	font-weight: 100;
 	width: 100vw;
-	height: 100vh;
+	height: 100dvh;
 	overflow: hidden;
 	cursor: crosshair;
 }
 #container {
 	width: 100vw;
-	height: 100vh;
+	height: 100dvh;
 	overflow: hidden;
 	background-color: black;
 	transform: translate3d(0,0,0);
