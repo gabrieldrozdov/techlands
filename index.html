@@ -4,10 +4,79 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0 user-scalable=no">
-	<title>Techlands</title>
+	<title>UNTITLED (Digital Landscape)</title>
+	<meta name="author" content="Gabriel Drozdov">
+	<meta name="keywords" content="Creative Coding, Toy, Game, Web Design, Web Development">
+	<meta name="description" content="An experiment.">
+	<meta property="og:url" content="https://landscape.noreplica.com/">
+	<meta name="og:title" property="og:title" content="UNITITLED (Digital Landscape)">
+	<meta property="og:description" content="An experiment.">
+	<meta property="og:image" content="./assets/ui/opengraph.jpg">
+	<link rel="icon" type="image/png" href="assets/ui/favicon.png" />
 	<link rel="stylesheet" href="style.css">
 </head>
-<body>	
+<body>
+	<header class="intro">
+		<div class="info">
+			<h1>UNTITLED (Digital Landscape)</h1>
+			<p>An experiment by <a href="https://noreplica.com/" target="_blank">No Replica</a> and <a href="https://gabrieldrozdov.com/" target="_blank">Gabriel Drozdov</a>.</p>
+			<p>Navigate the space. Figure it out.</p>
+		</div>
+		<div class="controls">
+			<div class="controls-group">
+				<p class="controls-label">Mode</p>
+				<div class="controls-toggles" id="controls-mode">
+					<button class="controls-toggle" data-active="1" onclick="setMode('maps', this)">Maps</button>
+					<button class="controls-toggle" data-active="0" onclick="setMode('wikipedia', this)">Articles</button>
+				</div>
+			</div>
+			<div class="controls-group">
+				<p class="controls-label">Quantity</p>
+				<div class="controls-toggles" id="controls-quantity">
+					<button class="controls-toggle" data-active="0" onclick="setQuantity(100, this)">100</button>
+					<button class="controls-toggle" data-active="1" onclick="setQuantity(250, this)">250</button>
+					<button class="controls-toggle" data-active="0" onclick="setQuantity(500, this)">500</button>
+				</div>
+			</div>
+			<div class="controls-group">
+				<p class="controls-label">Range</p> 
+				<div class="controls-toggles" id="controls-range">
+					<button class="controls-toggle" data-active="1" onclick="setRange('here', this)">Here</button>
+					<button class="controls-toggle" data-active="0" onclick="setRange('near', this)">Near</button>
+					<button class="controls-toggle" data-active="0" onclick="setRange('far', this)">Far</button>
+				</div>
+			</div>
+			<div class="controls-group">
+				<p class="controls-label">Trails</p>
+				<div class="controls-toggles" id="controls-trails">
+					<button class="controls-toggle" data-active="0" onclick="setTrails(true, this)">On</button>
+					<button class="controls-toggle" data-active="1" onclick="setTrails(false, this)">Off</button>
+				</div>
+			</div>
+			<div class="controls-group">
+				<p class="controls-label">UI</p>
+				<div class="controls-toggles" id="controls-ui">
+					<button class="controls-toggle" data-active="1" onclick="setUI(true, this)">On</button>
+					<button class="controls-toggle" data-active="0" onclick="setUI(false, this)">Off</button>
+				</div>
+			</div>
+			<div class="controls-group">
+				<p class="controls-label">Tour</p>
+				<div class="controls-toggles" id="controls-tour">
+					<button class="controls-toggle" data-active="0" onclick="setTour(true, this)">On</button>
+					<button class="controls-toggle" data-active="1" onclick="setTour(false, this)">Off</button>
+				</div>
+			</div>
+			<div class="controls-group">
+				<p class="controls-label">Glasses</p>
+				<div class="controls-toggles" id="controls-blur">
+					<button class="controls-toggle" data-active="1" onclick="setBlur(false, this)">On</button>
+					<button class="controls-toggle" data-active="0" onclick="setBlur(true, this)">Off</button>
+				</div>
+			</div>
+			<button class="controls-start" onclick="initSettings();">Begin</button>
+		</div>
+	</header>
 	<main id="container">
 		<div id="ui">
 			<div class="ui-x ui0">0</div>
@@ -28,6 +97,8 @@
 			<div id="paths"></div>
 		</div>
 	</main>
+
+	<div class="url"></div>
 	
 	<script src="script.js"></script>
 </body>

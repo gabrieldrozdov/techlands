@@ -28,7 +28,7 @@ let vel = [0, 0]; // x, y
 let targetVel = [0, 0]; // x, y
 let maxVel = 100;
 let mult = 1;
-let range = .2; // margin from window perimeter for mouse detection (0–1)
+let range = .05; // margin from window perimeter for mouse detection (0–1)
 let pos = [0, 0]; // x, y;
 let pause = false;
 let floaters = {};
@@ -36,7 +36,7 @@ let zoomLevel = 1;
 
 // Floater class
 class Floater {
-	constructor(id, src, origin, dim) {
+	constructor(id, src, origin, dim, url) {
 		this.id = id;
 		
 		// Set properties
@@ -55,7 +55,6 @@ class Floater {
 
 		// Create element
 		let floater = document.createElement("div");
-		floater.style.backgroundImage = `url("${this.src}")`;
 		floater.id = "floater"+this.id;
 		floater.dataset.id = this.id;
 		floater.classList.add("floater");
@@ -84,6 +83,21 @@ class Floater {
 		trackers.appendChild(tracker);
 		this.tracker = tracker;
 		this.trackerDot = trackerDot;
+
+		// Wikipedia
+		if (settings["mode"] == "wikipedia") {
+			floater.dataset.wikipedia = 1;
+			let initialized = false;
+			floater.addEventListener('mouseenter', () => {
+				if (!initialized) {
+					floater.innerHTML = `<iframe src="${`https://en.wikipedia.org/wiki/${url}"`}"></iframe>`;
+					initialized = true;
+				}
+			})
+			floater.addEventListener('dblclick', () => {window.open(`https://en.wikipedia.org/wiki/${url}"`, '_blank').focus();})
+		} else if (settings["mode"] == "maps") {
+			floater.style.backgroundImage = `url("${this.src}")`;
+		}
 	}
 
 	// Move origin by inputted amount
@@ -111,15 +125,11 @@ class Floater {
 			(this.pos[0] - this.dim[0]/2)*zoomLevel  // left
 		]
 
-		// Hide floater if far enough offscreen
-		if (bounds[1] >= -windowWidth/2-500 && bounds[3] <= windowWidth/2+500 && bounds[2] >= -windowHeight/2-500 && bounds[0] <= windowHeight/2+500) {
-			if (this.dom.style.display == "none") {
-				this.dom.style.display = "block";
-			}
+		// Hide floater if far enough offscreen (broken code)
+		if ((bounds[1] >= -windowWidth/2-500 && bounds[3] <= windowWidth/2+500) && (bounds[2] >= -windowHeight/2-500 && bounds[0] <= windowHeight/2+500)) {
+			this.dom.style.display = "block";
 		} else {
-			if (this.dom.style.display == "block") {
-				this.dom.style.display = "none";
-			}
+			this.dom.style.display = "none";
 		}
 		
 		// Tracker movement
@@ -219,7 +229,7 @@ function grabFloater(floater) {
 			]
 			floaterObject.shift(-deltaPos[0]*floaterObject.acc, -deltaPos[1]*floaterObject.acc);
 			prevPos = pos;
-		}, 17)
+		}, 1)
 	}
 
 	function dragFloater(e) {
@@ -337,22 +347,89 @@ function resetMouse() {
 }
 
 // Scroll to zoom
-let zoomStep = 0.01;
+let zoomStep = 0.03;
 function zoom(e) {
-	if (e.deltaY > 2) {
-		if (zoomLevel >= 2) {
-			zoomLevel = 2;
-		} else {
-			zoomLevel = +(zoomLevel+zoomStep).toFixed(2);
+	e.preventDefault();
+	if (e.ctrlKey) {
+		if (e.deltaY > 1) {
+			if (zoomLevel <= .25) {
+				zoomLevel = .25;
+			} else {
+				zoomLevel = +(zoomLevel-zoomStep).toFixed(2);
+			}
+		} else if (e.deltaY < -1) {
+			if (zoomLevel >= 2) {
+				zoomLevel = 2;
+			} else {
+				zoomLevel = +(zoomLevel+zoomStep).toFixed(2);
+			}
 		}
-	} else if (e.deltaY < -2) {
-		if (zoomLevel <= .25) {
-			zoomLevel = .25;
-		} else {
-			zoomLevel = +(zoomLevel-zoomStep).toFixed(2);
+		content.style.transform = `translate(-50%, -50%) scale(${zoomLevel})`;
+	} else {
+		// Scroll wheel velocities
+		let scrollVelX = e.deltaX/50;
+		if (scrollVelX > 1) {
+			scrollVelX = 1;
+		} else if (scrollVelX < -1) {
+			scrollVelX = -1;
 		}
+		targetVel[0] = parseFloat((scrollVelX).toFixed(1));
+
+		let scrollVelY = e.deltaY/50;
+		if (scrollVelY > 1) {
+			scrollVelY = 1;
+		} else if (scrollVelY < -1) {
+			scrollVelY = -1;
+		}
+		targetVel[1] = parseFloat((scrollVelY).toFixed(1));
 	}
-	content.style.transform = `translate(-50%, -50%) scale(${zoomLevel})`;
+}
+
+// Mobile movement
+let mobilePos = [0, 0];
+let mobilePosDelta = [0, 0];
+let trackMobileFinished = true;
+function trackMobile(e) {
+	e.preventDefault();
+
+	mobilePosDelta = [mobilePos[0]-e.touches[0].clientX, mobilePos[1]-e.touches[0].clientY];
+	mobilePos = [e.touches[0].clientX, e.touches[0].clientY];
+
+	if (trackMobileFinished) {
+		trackMobileDecay();
+	}
+}
+function trackMobileDecay() {
+	if (mobilePosDelta[0] < .01 && mobilePosDelta[0] > -.01) {
+		mobilePosDelta[0] = 0;
+	}
+	if (mobilePosDelta[1] < .01 && mobilePosDelta[1] > -.01) {
+		mobilePosDelta[1] = 0;
+	}
+	if (mobilePosDelta[0] == 0 && mobilePosDelta[1] == 0) {
+		targetVel = [0, 0];
+		trackMobileFinished = true;
+		return
+	}
+
+	let scrollVelX = mobilePosDelta[0]/10;
+	if (scrollVelX > 1) {
+		scrollVelX = 1;
+	} else if (scrollVelX < -1) {
+		scrollVelX = -1;
+	}
+	targetVel[0] = parseFloat((scrollVelX).toFixed(1));
+
+	let scrollVelY = mobilePosDelta[1]/10;
+	if (scrollVelY > 1) {
+		scrollVelY = 1;
+	} else if (scrollVelY < -1) {
+		scrollVelY = -1;
+	}
+	targetVel[1] = parseFloat((scrollVelY).toFixed(1));
+
+	mobilePosDelta = [mobilePosDelta[0]*.99, mobilePosDelta[1]*.99];
+	requestAnimationFrame(trackMobileDecay);
 }
 
 // Generate paths
@@ -361,7 +438,7 @@ function generatePath(endPos, total) {
 	let dim = Math.floor(Math.max(Math.abs(endPos[0]), Math.abs(endPos[1]))*1.5);
 
 	// Start SVG as HTML string
-	let path = `<svg class="path" style="width:${dim*2}px; height:${dim*2}px;" viewBox="0 0 ${dim*2} ${dim*2}"><filter id="displacementFilter"><feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="turbulence" /><feDisplacementMap in2="turbulence" in="SourceGraphic" scale="10" xChannelSelector="R" yChannelSelector="G" /></filter>`
+	let path = `<svg class="path" style="width:${dim*2}px; height:${dim*2}px;" viewBox="0 0 ${dim*2} ${dim*2}"><filter id="displacementFilter"><feTurbulence type="turbulence" baseFrequency=".1" numOctaves="10" result="turbulence" /><feDisplacementMap in2="turbulence" in="SourceGraphic" scale="1" xChannelSelector="R" yChannelSelector="G" /></filter>`
 
 	for (let iteration=0; iteration<total; iteration++) {
 		let pointPos = [dim, dim];
@@ -381,14 +458,14 @@ function generatePath(endPos, total) {
 			while (!reachEnd) {
 				let prevPoint = pointPos;
 				if (pointPos[0] < target[0]) {
-					pointPos = [Math.round((pointPos[0]+Math.random()*300)), pointPos[1]];
+					pointPos = [Math.round((pointPos[0]+Math.random()*50)), pointPos[1]];
 				} else {
-					pointPos = [Math.round((pointPos[0]-Math.random()*300)), pointPos[1]];
+					pointPos = [Math.round((pointPos[0]-Math.random()*50)), pointPos[1]];
 				}
 				if (pointPos[1] < target[1]) {
-					pointPos = [pointPos[0], Math.round((pointPos[1]+Math.random()*300))];
+					pointPos = [pointPos[0], Math.round((pointPos[1]+Math.random()*50))];
 				} else {
-					pointPos = [pointPos[0], Math.round((pointPos[1]-Math.random()*300))];
+					pointPos = [pointPos[0], Math.round((pointPos[1]-Math.random()*50))];
 				}
 	
 				let distance = [prevPoint[0]-pointPos[0], prevPoint[1]-pointPos[1]];
@@ -411,162 +488,262 @@ function generatePath(endPos, total) {
 	path += `"</svg>`
 	paths.innerHTML += path;
 }
-// generatePath([Math.random()*10000, Math.random()*10000], 3);
-// generatePath([Math.random()*10000, Math.random()*10000], 3);
-// generatePath([Math.random()*10000, Math.random()*10000], 3);
 
 // Main loop
 function begin() {
+	const intro = document.querySelector('.intro');
+	intro.dataset.active = 0;
+
+	// Range
+	let range = 5000;
+	if (settings['range'] == 'near') {
+		range = 15000;
+	} else if (settings['range'] == 'far') {
+		range = 50000;
+	}
 
 	// Generate floaters
 	let index = 0;
-	while (index<100) {
-		let floater = new Floater(index, `assets/maps/map${Math.floor(Math.random()*195)}.jpg`, [Math.round(Math.random()*8000-4000), Math.round(Math.random()*8000-4000)], [Math.round(Math.random()*800+100), Math.round(Math.random()*800+100)]);
-		floaters[index] = floater;
-		grabFloater(floater.dom);
+	while (index < settings["quantity"]) {
+		if (settings["mode"] == "wikipedia") {
+			let floater = new Floater(index, `assets/maps/map${Math.floor(Math.random()*195)}.jpg`, [Math.round(Math.random()*range-(range/2)), Math.round(Math.random()*range-(range/2))], [Math.round(Math.random()*2000+300), Math.round(Math.random()*2000+300)], randoms[index].title);
+			floaters[index] = floater;
+			grabFloater(floater.dom);
+		} else if (settings["mode"] == "maps") {
+			let floater = new Floater(index, `assets/maps/map${Math.floor(Math.random()*195)}.jpg`, [Math.round(Math.random()*range-(range/2)), Math.round(Math.random()*range-(range/2))], [Math.round(Math.random()*2000+300), Math.round(Math.random()*2000+300)], undefined);
+			floaters[index] = floater;
+			grabFloater(floater.dom);
+			index++;
+		}
 		index++;
 	}
-	setInterval(() => {
-		let floater = new Floater(index, `assets/maps/map${Math.floor(Math.random()*195)}.jpg`, [Math.round(Math.random()*8000-4000), Math.round(Math.random()*8000-4000)], [Math.round(Math.random()*800+100), Math.round(Math.random()*800+100)]);
-		floaters[index] = floater;
-		grabFloater(floater.dom);
-		index++;
-	}, 1000)
-
-	// Begin tracking mouse
-	container.addEventListener("mousemove", trackMouse);
-	window.addEventListener("resize", resetMouse);
-	container.addEventListener("wheel", zoom);
-	// startTour();
+	
+	if (settings["tour"]) {
+		startTour();
+	} else {
+		// Begin tracking mouse
+		container.addEventListener("mousemove", trackMouse);
+		container.addEventListener('touchmove', trackMobile);
+		window.addEventListener("resize", resetMouse);
+		container.addEventListener('mouseleave', resetMouse);
+		container.addEventListener('wheel', zoom, {passive: false});
+	}
 
 	// Start main loop
-	setInterval(() => {
-		// Adjust main position and background
-		pos = [
-			parseFloat((pos[0]-vel[0]*15).toFixed(5)),
-			parseFloat((pos[1]-vel[1]*15).toFixed(5))
-		]
-		content.style.backgroundPosition = `${pos[0]/5}px ${pos[1]/5}px`;
-	
-		// Move paths
-		paths.style.transform = `translate(calc(${pos[0]}px - 50%), calc(${pos[1]}px - 50%))`;
-	
-		// Adjust velocity toward target velocity
-		vel = [
-			parseFloat((vel[0]-((vel[0]-targetVel[0])/100)).toFixed(5)),
-			parseFloat((vel[1]-((vel[1]-targetVel[1])/100)).toFixed(5)),
-		]
-	
-		// Set velocity to 0 when small enough
-		// x velocity
-		if (vel[0] < .001 && vel[0] > -.001) {
-			vel = [0, vel[1]];
-		}
-		// y velocity
-		if (vel[1] < .001 && vel[1] > -.001) {
-			vel = [vel[0], 0];
-		}
-	
-		// Move objects
-		for (let floater of Object.keys(floaters)) {
-			floaters[floater].move();
-		}
-	
-		// Set UI values
-		uiX.innerText = -pos[0].toFixed(2);
-		uiY.innerText = -pos[1].toFixed(2);
-		uiVelX.innerText = vel[0].toFixed(2);
-		uiVelY.innerText = vel[1].toFixed(2);
-		uiTargetVelX.innerText = targetVel[0].toFixed(2);
-		uiTargetVelY.innerText = targetVel[1].toFixed(2);
-		uiScale.innerText = zoomLevel.toFixed(2);
-	}, 17); // 60fps
+	mainLoop();
+}
+
+function mainLoop() {
+	// Adjust main position and background
+	pos = [
+		parseFloat((pos[0]-vel[0]*15).toFixed(5)),
+		parseFloat((pos[1]-vel[1]*15).toFixed(5))
+	]
+	content.style.backgroundPosition = `${pos[0]/5}px ${pos[1]/5}px`;
+
+	// Move paths
+	paths.style.transform = `translate(calc(${pos[0]}px - 50%), calc(${pos[1]}px - 50%))`;
+
+	// Adjust velocity toward target velocity
+	vel = [
+		parseFloat((vel[0]-((vel[0]-targetVel[0])/100)).toFixed(5)),
+		parseFloat((vel[1]-((vel[1]-targetVel[1])/100)).toFixed(5)),
+	]
+
+	// Set velocity to 0 when small enough
+	// x velocity
+	if (vel[0] < .001 && vel[0] > -.001) {
+		vel = [0, vel[1]];
+	}
+	// y velocity
+	if (vel[1] < .001 && vel[1] > -.001) {
+		vel = [vel[0], 0];
+	}
+
+	// Move objects
+	for (let floater of Object.keys(floaters)) {
+		floaters[floater].move();
+	}
+
+	// Set UI values
+	uiX.innerText = -pos[0].toFixed(2);
+	uiY.innerText = -pos[1].toFixed(2);
+	uiVelX.innerText = vel[0].toFixed(2);
+	uiVelY.innerText = vel[1].toFixed(2);
+	uiTargetVelX.innerText = targetVel[0].toFixed(2);
+	uiTargetVelY.innerText = targetVel[1].toFixed(2);
+	uiScale.innerText = zoomLevel.toFixed(2);
+
+	// Restart loop
+	requestAnimationFrame(mainLoop);
 }
 
 // Automation
+let target;
+let arrived = [false, false];
+let targetZoom = Math.random()*1.75+.25;
 function startTour() {
-	let arrived = [false, false];
-	let target = [Math.round(Math.random()*8000-4000), Math.round(Math.random()*8000-4000)];
+	// Range
+	let range = 5000;
+	if (settings['range'] == 'near') {
+		range = 15000;
+	} else if (settings['range'] == 'far') {
+		range = 50000;
+	}
+
+	target = [Math.round(Math.random()*range-(range/2)), Math.round(Math.random()*range-(range/2))];
 	console.log(target);
-	let loop = setInterval(() => {
-		// Check for arrival x
-		if (Math.abs(pos[0]-target[0]) < 100) {
-			targetVel = [0, targetVel[1]];
-			arrived = [true, arrived[1]];
-		} else {
-			if (pos[0] < target[0]) {
-				targetVel = [-(Math.random()*.5+.5), targetVel[1]];
-			} else {
-				targetVel = [Math.random()*.5+.5, targetVel[1]];
-			}
-		}
-
-		// Check for arrival y
-		if (Math.abs(pos[1]-target[1]) < 100) {
-			targetVel = [targetVel[0], 0];
-			arrived = [arrived[0], true];
-		} else {
-			if (pos[1] < target[1]) {
-				targetVel = [targetVel[0], -(Math.random()*.5+.5)];
-			} else {
-				targetVel = [targetVel[0], Math.random()*.5+.5];
-			}
-		}
-
-		// Restart
-		if (arrived[0] == true && arrived[1] == true) {
-			clearInterval(loop);
-			targetVel = [0, 0];
-			setTimeout(() => {
-				simulateZoom();
-			}, 10000)
-		}
-	}, 500)
+	tourLoop();
 }
+function tourLoop() {
+	// Check for arrival x
+	if (Math.abs(pos[0]-target[0]) < 100) {
+		targetVel = [0, targetVel[1]];
+		arrived = [true, arrived[1]];
+	} else {
+		if (pos[0] < target[0]) {
+			targetVel = [-(Math.random()*.5+.5), targetVel[1]];
+		} else {
+			targetVel = [Math.random()*.5+.5, targetVel[1]];
+		}
+	}
 
+	// Check for arrival y
+	if (Math.abs(pos[1]-target[1]) < 100) {
+		targetVel = [targetVel[0], 0];
+		arrived = [arrived[0], true];
+	} else {
+		if (pos[1] < target[1]) {
+			targetVel = [targetVel[0], -(Math.random()*.5+.5)];
+		} else {
+			targetVel = [targetVel[0], Math.random()*.5+.5];
+		}
+	}
+
+	// Restart
+	if (arrived[0] == true && arrived[1] == true) {
+		arrived = [false, false];
+		targetVel = [0, 0];
+		setTimeout(() => {
+			targetZoom = Math.random()*1.75+.25;
+			simulateZoom();
+		}, 2000)
+	} else {
+		requestAnimationFrame(tourLoop);
+	}
+}
 function simulateZoom() {
-	let targetZoom = Math.random()*1.75+.25;
-	let loop = setInterval(() => {
-		if (Math.abs(zoomLevel - targetZoom) < .02) {
-			clearInterval(loop);
-			setTimeout(() => {
-				startTour();
-			}, 3000)
-		} else if (zoomLevel < targetZoom) {
-			zoomLevel += .01;
-		} else {
-			zoomLevel -= .01;
-		}
+	if (Math.abs(zoomLevel - targetZoom) < .02) {
+		setTimeout(() => {
+			startTour();
+		}, 1000)
+		return
+	} else if (zoomLevel < targetZoom) {
+		zoomLevel += .01;
+	} else {
+		zoomLevel -= .01;
+	}
 
-		content.style.transform = `translate(-50%, -50%) scale(${zoomLevel})`;
-	}, 17)
+	content.style.transform = `translate(-50%, -50%) scale(${zoomLevel})`;
+	requestAnimationFrame(simulateZoom);
 }
 
+// Controls
+let settings = {
+	"mode": "maps",
+	"quantity": 250,
+	"range": 'near',
+	"trails": false,
+	"ui": true,
+	"tour": false,
+	"blur": false
+}
+function setMode(setting, elmnt) {
+	settings['mode'] = setting;
+	for (let toggle of document.querySelectorAll('#controls-mode .controls-toggle')) {
+		toggle.dataset.active = 0;
+	}
+	elmnt.dataset.active = 1;
+}
+function setQuantity(setting, elmnt) {
+	settings['quantity'] = setting;
+	for (let toggle of document.querySelectorAll('#controls-quantity .controls-toggle')) {
+		toggle.dataset.active = 0;
+	}
+	elmnt.dataset.active = 1;
+}
+function setRange(setting, elmnt) {
+	settings['range'] = setting;
+	for (let toggle of document.querySelectorAll('#controls-range .controls-toggle')) {
+		toggle.dataset.active = 0;
+	}
+	elmnt.dataset.active = 1;
+}
+function setTrails(setting, elmnt) {
+	settings['trails'] = setting;
+	for (let toggle of document.querySelectorAll('#controls-trails .controls-toggle')) {
+		toggle.dataset.active = 0;
+	}
+	elmnt.dataset.active = 1;
+}
+function setUI(setting, elmnt) {
+	settings['ui'] = setting;
+	for (let toggle of document.querySelectorAll('#controls-ui .controls-toggle')) {
+		toggle.dataset.active = 0;
+	}
+	elmnt.dataset.active = 1;
+}
+function setTour(setting, elmnt) {
+	settings['tour'] = setting;
+	for (let toggle of document.querySelectorAll('#controls-tour .controls-toggle')) {
+		toggle.dataset.active = 0;
+	}
+	elmnt.dataset.active = 1;
+}
+function setBlur(setting, elmnt) {
+	settings['blur'] = setting;
+	for (let toggle of document.querySelectorAll('#controls-blur .controls-toggle')) {
+		toggle.dataset.active = 0;
+	}
+	elmnt.dataset.active = 1;
+}
 
-begin();
+// Get started
+let randoms;
+function initSettings() {
+	if (settings['mode'] == "wikipedia") {
+		let url = "https://en.wikipedia.org/w/api.php"; 
+		const params = {
+			action: "query",
+			format: "json",
+			list: "random",
+			rnnamespace: "0",
+			rnlimit: "500"
+		};
+		url = url + "?origin=*";
+		Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
+		fetch(url)
+			.then(function(response){return response.json();})
+			.then(function(response) {
+				randoms = response.query.random;
+				console.log(randoms);
+				begin();
+			})
+	} else if (settings['mode'] == "maps") {
+		begin();
+	}
 
+	if (settings['trails']) {
+		generatePath([Math.random()*2000, Math.random()*2000], 5);
+	}
+	if (!settings['ui']) {
+		document.querySelector('#container').dataset.ui = 0;
+	}
+	if (settings['blur']) {
+		document.querySelector('#container').dataset.blur = 1;
+	}
+}
 
-
-// TODO
-
-// instructions appear in the middle
-// name?
-// gradients should be equal size not by percentage
-// prevent pinch to zoom
-
-// what to do about tour mode?
-
-// tilt to move on mobile (or scroll to move?)
-
-// what to do about dragging?
-// need popup for anything hovered
-// intro effect for new items
-// some way to indicate new item appears
-// prevent indicator popping up in top left corner
-
-// wikipedia namespace and api
-// https://en.wikipedia.org/w/api.php?action=query&format=json&list=random&rnlimit=100
-// https://en.wikipedia.org/wiki/Wikipedia:Namespace
-// https://www.mediawiki.org/wiki/API:Random
-
-// icon and opengraph and metadata
+// TODO for someday
+// add ui overlay for wikipedia links
+// fetch new data for maps
