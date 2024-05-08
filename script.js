@@ -90,11 +90,11 @@ class Floater {
 			let initialized = false;
 			floater.addEventListener('mouseenter', () => {
 				if (!initialized) {
-					floater.innerHTML = `<iframe src="${`https://en.wikipedia.org/wiki/${url}"`}"></iframe>`;
+					floater.innerHTML = `<iframe src="${`https://en.wikipedia.org/wiki/${url}`}"></iframe>`;
 					initialized = true;
 				}
 			})
-			floater.addEventListener('dblclick', () => {window.open(`https://en.wikipedia.org/wiki/${url}"`, '_blank').focus();})
+			floater.addEventListener('dblclick', () => {window.open(`https://en.wikipedia.org/wiki/${url}`, '_blank').focus();})
 		} else if (settings["mode"] == "maps") {
 			floater.style.backgroundImage = `url("${this.src}")`;
 		}
